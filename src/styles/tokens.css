@@ -1,0 +1,188 @@
+/* =============================================================================
+ * Word Quest — design tokens
+ * Canonical source: BUILD_SPEC.md §4 (Visual Design System)
+ *
+ * Every UI / screen / component CSS in this repo MUST reference values via
+ * var(--token), never as literals. If a value is missing here and you need it,
+ * either (a) add it to BUILD_SPEC.md §4 and mirror it here, or (b) refuse the
+ * issue and ask for a spec amendment per CLAUDE.md "When to refuse".
+ *
+ * Naming follows BUILD_SPEC.md §4.1 verbatim (e.g. --bg-primary, --card-bg,
+ * --pill-1, --font-display) — the spec wins over issue-body prefix
+ * suggestions per CLAUDE.md Phase 2.
+ * ========================================================================== */
+
+:root {
+  /* -------------------------------------------------------------------------
+   * §4.1 Color tokens
+   * ------------------------------------------------------------------------- */
+
+  /* Backgrounds — §4.1 */
+  --bg-primary:        #1B3550;                 /* deep navy — main bg */
+  --bg-elevated:       #1F3D5C;                 /* slightly lighter — cards on bg */
+  --bg-overlay:        rgba(11, 22, 36, 0.78);  /* modal scrim */
+
+  /* Game card — §4.1 */
+  --card-bg:           linear-gradient(180deg, #FFFFFF 0%, #E8ECEF 100%);
+  --card-radius:       28px;
+  --card-shadow:       0 8px 24px rgba(0, 0, 0, 0.25);
+
+  /* Theme banner / list strip — §4.1 */
+  --theme-banner-bg:   #1A6388;                 /* dark teal-blue */
+  --theme-banner-text: #FFFFFF;
+  --wordlist-bg:       linear-gradient(180deg, #FFFFFF 0%, #E2E6EB 100%);
+  --wordlist-text:     #1B3550;
+
+  /* Top bar — §4.1 */
+  --topbar-pill-bg:    #133048;                 /* darker pill behind mode/level */
+  --topbar-text:       #FFFFFF;
+  --hamburger-bg:      #2BA1E2;                 /* light blue square */
+  --hamburger-icon:    #FFFFFF;
+
+  /* Coin — §4.1 */
+  --coin-gold:         #F2C73B;
+  --coin-gold-dark:    #C49419;
+  --coin-bg-pill:      #133048;
+
+  /* Buttons — §4.1 */
+  --btn-primary:       linear-gradient(180deg, #4ED068 0%, #2DAE49 100%);  /* green */
+  --btn-primary-press: linear-gradient(180deg, #3CB857 0%, #1F8E3A 100%);
+  --btn-add-coin:      linear-gradient(180deg, #4ED068 0%, #2DAE49 100%);
+  --btn-disabled:      #6E8194;
+
+  /* Progress bar — §4.1 */
+  --progress-track:    #102A40;
+  --progress-fill:     linear-gradient(180deg, #FFE17A 0%, #F2C73B 100%);
+  --progress-glow:     0 0 6px rgba(242, 199, 59, 0.6);
+
+  /* Power-up buttons — §4.1 */
+  --pwr-bg:            linear-gradient(180deg, #4FB7E8 0%, #2B8FC4 100%);
+  --pwr-bg-press:      linear-gradient(180deg, #3FA0D0 0%, #1F75A8 100%);
+  --pwr-badge:         #E84545;                 /* red notification dot */
+  --pwr-icon:          #FFFFFF;
+
+  /* Ribbon (LEVEL N COMPLETE!) — §4.1 */
+  --ribbon-gold:       linear-gradient(180deg, #FFD24D 0%, #E8A41A 100%);
+  --ribbon-shadow:     #B26F00;
+  --ribbon-text:       #8C2A12;                 /* deep red-brown */
+
+  /* Found-word pill palette — §4.1; cycles through these in order (mod 7) */
+  --pill-1: #BFA6F0;                            /* lavender */
+  --pill-2: #9CE0CC;                            /* mint */
+  --pill-3: #F4B8C7;                            /* rose pink */
+  --pill-4: #E8A977;                            /* peach */
+  --pill-5: #B8E07A;                            /* lime */
+  --pill-6: #87C7E8;                            /* sky */
+  --pill-7: #DDB8E0;                            /* lilac */
+  --pill-active: rgba(155, 220, 130, 0.55);     /* in-progress drag (semi-transparent green) */
+
+  /* Letters — §4.1 */
+  --letter-color:      #1A1A1A;                 /* near-black */
+  --letter-faded:      rgba(26, 26, 26, 0.22);  /* magic-wand-removed fillers */
+
+  /* -------------------------------------------------------------------------
+   * §4.1 / §4.2 Typography tokens
+   * ------------------------------------------------------------------------- */
+
+  /* Font families — §4.1 */
+  --font-display: 'Fredoka', 'Baloo 2', system-ui, sans-serif;  /* rounded, bold */
+  --font-body:    'Inter', system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', monospace;                  /* grid letters */
+
+  /* Type scale — §4.2 (mobile sizes) */
+  --fs-display-xl: 44px;     /* "LEVEL N COMPLETE!" ribbon — weight 800 */
+  --fs-display-l:  32px;     /* "WORDS FOUND", "HOW TO PLAY" — weight 700 */
+  --fs-display-m:  22px;     /* Theme name, modal titles — weight 700 */
+  --fs-letter:     40px;     /* Grid letters — §4.2 says 36–44px responsive; 40 is mid; weight 700 */
+  --fs-body-l:     18px;     /* Word list entries, button labels — weight 600 */
+  --fs-body-m:     15px;     /* Tooltips, level subtitle — weight 500 */
+  --fs-body-s:     13px;     /* Coin count, badge numbers — weight 500 */
+
+  /* Font weights — §4.2 (paired with sizes above) */
+  --fw-display-xl: 800;
+  --fw-display-l:  700;
+  --fw-display-m:  700;
+  --fw-letter:     700;
+  --fw-body-l:     600;
+  --fw-body-m:     500;
+  --fw-body-s:     500;
+
+  /* Line heights — §4.2 silent on exact values; use sensible defaults
+     scaled to type role. Refine if §4.2 pins values later. */
+  --lh-display: 1.1;          /* tight for headings/ribbon */
+  --lh-body:    1.4;          /* readable body */
+  --lh-letter:  1;            /* single grid letter, no extra leading */
+
+  /* -------------------------------------------------------------------------
+   * §4.3 Spacing scale (base unit 4px)
+   * Issue body specifies the 4/8/12/16/24/32/48/64 progression; values are
+   * consistent with §4.3 base unit.
+   * ------------------------------------------------------------------------- */
+  --sp-1:   4px;
+  --sp-2:   8px;
+  --sp-3:   12px;
+  --sp-4:   16px;
+  --sp-6:   24px;
+  --sp-8:   32px;
+  --sp-12:  48px;
+  --sp-16:  64px;
+
+  /* Touch target floor — §4.3 (iOS HIG) */
+  --touch-min: 44px;
+
+  /* Safe-area insets — §4.3 (re-export env() for components that prefer
+     a single token; respect on all four sides). */
+  --safe-top:    env(safe-area-inset-top, 0px);
+  --safe-right:  env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left:   env(safe-area-inset-left, 0px);
+
+  /* -------------------------------------------------------------------------
+   * §4.3 Radius tokens
+   * ------------------------------------------------------------------------- */
+  --r-card: 28px;             /* §4.3 outer card */
+  --r-cell: 16px;             /* §4.3 inner cells */
+  --r-pill: 9999px;           /* §4.3 pills, buttons */
+
+  /* -------------------------------------------------------------------------
+   * §4.4 Shadows & elevation
+   * ------------------------------------------------------------------------- */
+  --shadow-card:           0 8px 24px rgba(0, 0, 0, 0.25);   /* §4.4 */
+  --shadow-button-resting: 0 4px 0 rgba(0, 0, 0, 0.18);      /* §4.4 chunky stacked */
+  --shadow-button-pressed: 0 1px 0 rgba(0, 0, 0, 0.18);      /* §4.4 — paired with translateY(3px) */
+  --button-press-translate: 3px;                              /* §4.4 — pressed state offset */
+  --shadow-modal:          0 16px 48px rgba(0, 0, 0, 0.45);  /* §4.4 */
+
+  /* -------------------------------------------------------------------------
+   * §4.5 Animation timing — durations
+   * ------------------------------------------------------------------------- */
+  --dur-screen-fade:  220ms;  /* §4.5 — screen fade in/out */
+  --dur-pill-draw:    320ms;  /* §4.5 — pill draw (found word) */
+  --dur-strike:       260ms;  /* §4.5 — strikethrough draw */
+  --dur-coin-tick:    600ms;  /* §4.5 — coin counter total (30ms/digit pacing handled in JS) */
+  --dur-coin-digit:   30ms;   /* §4.5 — per-digit pacing reference */
+  --dur-ribbon-drop:  480ms;  /* §4.5 — ribbon drop on level complete */
+  --dur-press:        90ms;   /* §4.5 — button press */
+  --dur-drawer:       280ms;  /* §4.5 — drawer slide */
+  --dur-letter-blow:  600ms;  /* §4.5 — letter "blow away" total stagger window */
+  --dur-hint-shimmer: 1.2s;   /* §4.5 — hint shimmer loop */
+
+  /* §4.5 Animation timing — easings */
+  --ease-out:        ease-out;                                  /* §4.5 (multiple rows) */
+  --ease-in:         ease-in;                                   /* §4.5 (letter blow) */
+  --ease-in-out:     ease-in-out;                               /* §4.5 (hint shimmer) */
+  --ease-overshoot:  cubic-bezier(0.34, 1.3, 0.64, 1);          /* §4.5 — pill draw slight overshoot */
+  --ease-bounce:     cubic-bezier(0.5, 1.6, 0.5, 1);            /* §4.5 — ribbon drop bounce */
+  --ease-drawer:     cubic-bezier(0.4, 0, 0.2, 1);              /* §4.5 — drawer slide */
+  --ease-linear:     linear;                                    /* §4.5 — coin counter tick */
+
+  /* -------------------------------------------------------------------------
+   * Z-index scale
+   * §4 does not pin exact values — hierarchy below is from issue #2 body
+   * (splash > modal > screen > base). If §4 later specifies, mirror here.
+   * ------------------------------------------------------------------------- */
+  --z-base:   1;     /* default DOM flow */
+  --z-screen: 10;    /* per-screen container */
+  --z-modal:  100;   /* modals, dialogs, scrims */
+  --z-splash: 1000;  /* splash overlays everything */
+}
