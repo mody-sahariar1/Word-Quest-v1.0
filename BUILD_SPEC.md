@@ -8,6 +8,39 @@ This document is the single source of truth. When in doubt, prefer this spec ove
 
 ---
 
+## Reference videos (gameplay capture from the reference game)
+
+The spec was written from frame-by-frame analysis of these recordings. When implementing a feature where the spec is ambiguous about timing, motion, or visual feel, **download the relevant video and watch the moment in question** before coding.
+
+Hosted on this repo's GitHub Releases at tag `reference-videos-v1`:
+
+| File | Size | Shows | Download URL |
+|---|---|---|---|
+| `Project1.MOV` | 35MB | _(description TBD by Shahariar)_ | https://github.com/mody-sahariar1/Word-Quest-v1.0/releases/download/reference-videos-v1/Project1.MOV |
+| `Project2.MOV` | 26MB | _(description TBD)_ | https://github.com/mody-sahariar1/Word-Quest-v1.0/releases/download/reference-videos-v1/Project2.MOV |
+| `Project3.MOV` | 24MB | _(description TBD)_ | https://github.com/mody-sahariar1/Word-Quest-v1.0/releases/download/reference-videos-v1/Project3.MOV |
+| `Project4.MOV` | 22MB | _(description TBD)_ | https://github.com/mody-sahariar1/Word-Quest-v1.0/releases/download/reference-videos-v1/Project4.MOV |
+
+### How the daemon (or any builder) fetches one
+
+```bash
+# Single video
+gh release download reference-videos-v1 --repo mody-sahariar1/Word-Quest-v1.0 --pattern 'Project1.MOV'
+
+# All four
+gh release download reference-videos-v1 --repo mody-sahariar1/Word-Quest-v1.0
+```
+
+Files land in the current working directory. They are not tracked in git — fetch on demand, delete after use, do not commit.
+
+### What these videos are NOT
+
+They are not target output. We do not clone proprietary art, branded categories, or copyrighted icons (per the project intro). The videos are **frame-of-reference for behavior + feel** — pacing, animation curves, drag responsiveness, transition timings — not for visual or content cloning.
+
+If a video shows a copyrighted asset (sponsor logo, named celebrity, branded category), **the spec wins** — we ship our own version of the same mechanic, not the asset.
+
+---
+
 ## 0. How to read this spec
 
 Every section is self-contained. You do not need to read top-to-bottom — Claude Code can be pointed at individual sections. But the **Architecture (§3)** and **Visual Design System (§4)** sections must be internalized before writing any UI code, because they encode dozens of small decisions that will otherwise drift.
