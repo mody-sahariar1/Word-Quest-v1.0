@@ -8,6 +8,7 @@
   <meta name="theme-color" content="#1B3550">
   <link rel="stylesheet" href="./src/styles/tokens.css">
   <link rel="stylesheet" href="./src/styles/router.css">
+  <link rel="stylesheet" href="./src/styles/grid.css">
 </head>
 <body>
   <!-- Screen mount root. Router toggles [data-active] on the active section.
@@ -15,7 +16,12 @@
   <div id="app">
     <section data-screen="splash"></section>
     <section data-screen="menu"></section>
-    <section data-screen="game"></section>
+    <section data-screen="game">
+      <!-- G1: grid render preview. Top bar / theme banner / word list / power-up
+           bar land in later issues per BUILD_SPEC.md §5.3. Issue #5. -->
+      <div class="wayfinding-banner" data-feature="grid">G1: grid render preview · selection coming soon</div>
+      <div id="grid-root"></div>
+    </section>
   </div>
   <script type="module" src="./src/main.js"></script>
 </body>

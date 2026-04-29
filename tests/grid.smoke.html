@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Grid smoke — Word Quest</title>
+  <link rel="stylesheet" href="../src/styles/tokens.css">
+  <link rel="stylesheet" href="../src/styles/grid.css">
+  <style>
+    body { font-family: var(--font-body); padding: var(--sp-4); background: var(--bg-primary); color: #fff; }
+    pre { background: var(--bg-elevated); padding: var(--sp-3); border-radius: var(--r-cell); white-space: pre-wrap; }
+    h2 { font-size: var(--fs-display-m); margin-top: var(--sp-6); }
+    .mount { margin: var(--sp-3) auto var(--sp-6); }
+    /* Smaller in the harness so all three grids fit without scrolling. */
+    .mount#mount-4, .mount#mount-5, .mount#mount-8 { width: min(60vw, 360px); max-width: none; }
+  </style>
+</head>
+<body>
+  <h1>Grid smoke</h1>
+  <pre id="out">running…</pre>
+
+  <h2>4×4</h2>
+  <div class="mount" id="mount-4"></div>
+  <h2>5×5</h2>
+  <div class="mount" id="mount-5"></div>
+  <h2>8×8</h2>
+  <div class="mount" id="mount-8"></div>
+
+  <script type="module">
+    // Per CLAUDE.md Step 3 rule 9 (smoke runtime fidelity):
+    //   (a) call the runtime entry main.js calls (createGrid + renderGrid)
+    //   (b) pass runtime args (a real letters fixture, not a stub)
+    //   (c) assert positive states (buttons.length === 25, NEVER negation)
+    import { on, _resetForTests as resetBus } from '../src/engine/eventBus.js';
+    import { EVENTS } from '../src/engine/constants.js';
+    import { createGrid, renderGrid } from '../src/game/grid.js';
+
+    const out = document.getElementById('out');
+    const log = [];
+    function assert(cond, msg) {
+      log.push((cond ? 'PASS ' : 'FAIL ') + msg);
+      if (!cond) out.style.color = '#E84545';
+    }
+    function fixture(rows, cols) {
+      const out = [];
+      for (let r = 0; r < rows; r++) {
+        const row = [];
+        // Use varied letters so we can verify aria-labels + textContent.
+        for (let c = 0; c < cols; c++) row.push(String.fromCharCode(65 + ((r * cols + c) % 26)));
+        out.push(row);
+      }
+      return out;
+    }
+
+    resetBus();
+    let readyEvents = [];
+    on(EVENTS.GRID_READY, (p) => readyEvents.push(p));
+
+    // 1. 5×5 from the issue body verbatim.
+    const grid5 = createGrid(5, 5, [
+      ['S', 'U', 'N', 'X', 'X'],
+      ['A', 'X', 'X', 'X', 'X'],
+      ['B', 'X', 'X', 'X', 'X'],
+      ['X', 'X', 'X', 'X', 'X'],
+      ['X', 'X', 'X', 'X', 'X'],
+    ]);
+    const mount5 = document.getElementById('mount-5');
+    renderGrid(grid5, mount5);
+    const cells5 = mount5.querySelectorAll('button.cell');
+    assert(cells5.length === 25, '5×5 produces 25 .cell buttons');
+    assert(cells5[0].dataset.row === '0' && cells5[0].dataset.col === '0', 'first cell has data-row=0 data-col=0');
+    assert(cells5[0].textContent === 'S' && cells5[2].textContent === 'N', 'row-major order: (0,0)=S, (0,2)=N');
+    assert(cells5[5].textContent === 'A' && cells5[5].dataset.row === '1', 'second row starts at index 5: (1,0)=A');
+    assert(cells5[0].type === 'button', 'cell is a <button type="button">');
+    assert(cells5[0].getAttribute('aria-label') === 'Letter S at row 1 column 1', 'aria-label is descriptive');
+    assert(getComputedStyle(mount5).display === 'grid', 'mount uses display:grid');
+    assert(mount5.style.getPropertyValue('--grid-cols') === '5', '--grid-cols set on mount');
+    assert(mount5.style.getPropertyValue('--grid-rows') === '5', '--grid-rows set on mount');
+
+    // 2. 4×4 floor.
+    const grid4 = createGrid(4, 4, fixture(4, 4));
+    const mount4 = document.getElementById('mount-4');
+    renderGrid(grid4, mount4);
+    assert(mount4.querySelectorAll('button.cell').length === 16, '4×4 produces 16 cells');
+
+    // 3. 8×8 ceiling — fits 375px viewport with breathing room.
+    const grid8 = createGrid(8, 8, fixture(8, 8));
+    const mount8 = document.getElementById('mount-8');
+    renderGrid(grid8, mount8);
+    const cells8 = mount8.querySelectorAll('button.cell');
+    assert(cells8.length === 64, '8×8 produces 64 cells');
+    // Last cell should be at (7,7) — proves row-major iteration completes.
+    assert(cells8[63].dataset.row === '7' && cells8[63].dataset.col === '7', 'last cell is (7,7)');
+
+    // 4. grid:ready fires once per renderGrid call (3 mounts above).
+    assert(readyEvents.length === 3, 'grid:ready fired 3 times (once per renderGrid)');
+    assert(readyEvents[0].rows === 5 && readyEvents[0].cols === 5, 'grid:ready payload carries rows/cols');
+    assert(readyEvents[0].mountEl === mount5, 'grid:ready payload carries mountEl');
+
+    // 5. Idempotent re-mount — calling renderGrid twice on the same mount
+    //    leaves exactly one grid (not two stacked).
+    renderGrid(grid5, mount5);
+    assert(mount5.querySelectorAll('button.cell').length === 25, 're-render leaves exactly 25 cells (idempotent)');
+
+    // 6. createGrid validation — out-of-range rows/cols throw.
+    let threw = false;
+    try { createGrid(3, 3, fixture(3, 3)); } catch (e) { threw = true; }
+    assert(threw, 'createGrid(3, 3, …) throws — below 4×4 floor');
+    threw = false;
+    try { createGrid(9, 9, fixture(9, 9)); } catch (e) { threw = true; }
+    assert(threw, 'createGrid(9, 9, …) throws — above 8×8 ceiling');
+
+    // 7. createGrid validation — mismatched letters dimensions throw.
+    threw = false;
+    try { createGrid(5, 5, fixture(4, 5)); } catch (e) { threw = true; }
+    assert(threw, 'createGrid(5, 5, 4-row letters) throws');
+    threw = false;
+    try { createGrid(5, 5, fixture(5, 4)); } catch (e) { threw = true; }
+    assert(threw, 'createGrid(5, 5, 4-col letters) throws');
+
+    // 8. createGrid validation — multi-character cell throws.
+    threw = false;
+    try { createGrid(4, 4, [['AB','C','D','E'],['F','G','H','I'],['J','K','L','M'],['N','O','P','Q']]); } catch (e) { threw = true; }
+    assert(threw, "createGrid rejects multi-char cell ('AB')");
+
+    // 9. grid.at — in-range returns the letter; out-of-range throws.
+    assert(grid5.at(0, 0) === 'S', 'grid.at(0,0) returns S');
+    assert(grid5.at(2, 0) === 'B', 'grid.at(2,0) returns B');
+    threw = false;
+    try { grid5.at(-1, 0); } catch (e) { threw = true; }
+    assert(threw, 'grid.at(-1, 0) throws');
+    threw = false;
+    try { grid5.at(0, 5); } catch (e) { threw = true; }
+    assert(threw, 'grid.at(0, 5) throws (col out of range for 5×5)');
+
+    // 10. Model immutability — mutating returned letters does NOT affect the model.
+    threw = false;
+    try { grid5.letters[0][0] = 'Z'; } catch (e) { threw = true; }
+    assert(grid5.at(0, 0) === 'S', 'grid.letters is frozen — mutation is rejected (S preserved)');
+
+    out.textContent = log.join('\n');
+  </script>
+</body>
+</html>

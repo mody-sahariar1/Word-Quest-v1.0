@@ -5,6 +5,6 @@
   "private": true,
   "scripts": {
     "dev": "python3 -m http.server 8000",
-    "validate": "node --check src/main.js && node --check src/engine/eventBus.js && node --check src/engine/state.js && node --check src/engine/storage.js && node --check src/engine/constants.js && node --check src/engine/router.js"
+    "validate": "node --check src/main.js && node --check src/engine/eventBus.js && node --check src/engine/state.js && node --check src/engine/storage.js && node --check src/engine/constants.js && node --check src/engine/router.js && node --check src/game/grid.js"
   }
 }

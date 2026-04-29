@@ -22,6 +22,11 @@ export const EVENTS = {
   SCREEN_ENTER: 'screen:enter',
   SCREEN_EXIT: 'screen:exit',
 
+  // Grid lifecycle — added in #5. §3.4 silent on grid lifecycle; issue
+  // body mandates `grid:ready` after renderGrid mounts. Spec gap routed
+  // via #8 along with the screen:* additions from #4.
+  GRID_READY: 'grid:ready',
+
   // Game/UI layers — placeholders, emitted in later issues (#4+)
   GAME_START: 'game:start',
   DRAG_BEGIN: 'drag:begin',
