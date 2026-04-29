@@ -16,6 +16,12 @@ export const EVENTS = {
   STATE_CHANGE: 'state:change',
   STORAGE_LOADED: 'storage:loaded',
 
+  // Router lifecycle — added in #4. Not in §3.4's table; the issue mandates
+  // them and §3.4 is silent on screen lifecycle, so we extend the canonical
+  // table here. Spec gap surfaced via observation routing (#8).
+  SCREEN_ENTER: 'screen:enter',
+  SCREEN_EXIT: 'screen:exit',
+
   // Game/UI layers — placeholders, emitted in later issues (#4+)
   GAME_START: 'game:start',
   DRAG_BEGIN: 'drag:begin',
@@ -28,6 +34,23 @@ export const EVENTS = {
   POWERUP_USE: 'powerup:use',
   POWERUP_EARN: 'powerup:earn',
   SETTINGS_CHANGE: 'settings:change',
+};
+
+// Canonical screen names — BUILD_SPEC.md §3.1.
+// All 11 listed up front so subsequent screen issues don't have to amend
+// this table; index.html only mounts the three needed for G1 boot.
+export const SCREENS = {
+  SPLASH: 'splash',
+  HOW_TO_PLAY: 'howToPlay',
+  MENU: 'menu',
+  GAME: 'game',
+  LEVEL_COMPLETE: 'levelComplete',
+  CATEGORIES: 'categories',
+  CUSTOM_MODE: 'customMode',
+  STORY_MODE: 'storyMode',
+  DAILY_CHECK_IN: 'dailyCheckIn',
+  SHOP: 'shop',
+  SETTINGS: 'settings',
 };
 
 // Persistent state keys (BUILD_SPEC.md §3.2 first block).
