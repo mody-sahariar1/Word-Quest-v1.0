@@ -1,0 +1,10 @@
+{
+  "name": "word-quest",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "python3 -m http.server 8000",
+    "validate": "node --check src/main.js"
+  }
+}
