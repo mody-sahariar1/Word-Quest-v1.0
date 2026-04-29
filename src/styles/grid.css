@@ -1,0 +1,70 @@
+/* Grid card — CSS Grid of letter cells.
+ * Per BUILD_SPEC.md §5.3.4 (grid card shape, sizing) + §4.2 (typography
+ * — `--fs-letter` 36–44px, "responsive to grid size"). Issue #5.
+ *
+ * Tokens come from tokens.css (#2). No magic numbers in this file. */
+
+#grid-root {
+  display: grid;
+  grid-template-columns: repeat(var(--grid-cols, 6), 1fr);
+  grid-template-rows: repeat(var(--grid-rows, 6), 1fr);
+  gap: var(--sp-2);
+  /* §5.3.4: aspect-ratio: N/M (cols/rows) so the card stays square-ish
+   * regardless of grid dimensions. */
+  aspect-ratio: var(--grid-cols, 6) / var(--grid-rows, 6);
+  /* §5.3.4 sizing: max-width min(92vw, 520px) with safe-area breathing
+   * room so an 8×8 grid still fits a 375px viewport with no horizontal
+   * scroll (375 - 32 = 343px usable). */
+  width: min(92vw, 520px);
+  max-width: calc(100vw - var(--sp-8));
+  margin: 0 auto;
+  padding: var(--sp-2);
+  background: var(--card-bg);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow-card);
+}
+
+.cell {
+  /* Square cells regardless of font size. */
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+
+  /* Typography — §4.2: `--fs-letter` is 40px at default but flagged as
+   * "responsive to grid size". A static 40px overflows tight viewports
+   * at 8×8 (375vw / 8cols ≈ 42px per cell — letter would clip). Scale
+   * the font-size down as cols grow, clamped to a readable floor. */
+  font-family: var(--font-mono);
+  font-size: clamp(20px, calc(var(--fs-letter) * 6 / var(--grid-cols, 6)), var(--fs-letter));
+  font-weight: var(--fw-letter);
+  color: var(--letter-color);
+  line-height: var(--lh-letter);
+
+  background: #FFFFFF;
+  border: none;
+  border-radius: var(--r-cell);
+  box-shadow: var(--shadow-button-resting);
+
+  /* No hover affordance — input layer lands later (#~6). */
+  cursor: default;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  padding: 0;
+}
+
+/* Wayfinding stub — present until the real game-screen UI lands.
+ * Per CLAUDE.md Step 3 rule 10: user-facing surfaces need a plain DOM
+ * banner so testers know the feature is alive. Removed when top bar /
+ * theme banner / word list arrive in later issues. */
+.wayfinding-banner {
+  padding: var(--sp-2) var(--sp-3);
+  margin: 0 auto var(--sp-3);
+  max-width: min(92vw, 520px);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.85);
+  border-radius: var(--r-cell);
+  font-family: var(--font-body);
+  font-size: var(--fs-body-s);
+  font-weight: var(--fw-body-s);
+  text-align: center;
+}
