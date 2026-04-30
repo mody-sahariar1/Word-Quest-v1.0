@@ -5,6 +5,6 @@
   "private": true,
   "scripts": {
     "dev": "python3 -m http.server 8000",
-    "validate": "node --check src/main.js && node --check src/engine/eventBus.js && node --check src/engine/state.js && node --check src/engine/storage.js && node --check src/engine/constants.js && node --check src/engine/router.js && node --check src/game/grid.js && node --check src/game/generator.js && node --check src/game/selector.js && node --check src/game/validator.js && node --check src/data/levelLoader.js && node -e \"JSON.parse(require('fs').readFileSync('src/data/classicLevels.json','utf8'))\" && node tests/levelLoader.smoke.mjs && node tests/generator.smoke.mjs && node tests/selector.smoke.mjs && node tests/validator.smoke.mjs"
+    "validate": "node --check src/main.js && node --check src/engine/eventBus.js && node --check src/engine/state.js && node --check src/engine/storage.js && node --check src/engine/constants.js && node --check src/engine/router.js && node --check src/game/grid.js && node --check src/game/generator.js && node --check src/game/selector.js && node --check src/game/validator.js && node --check src/game/pillRenderer.js && node --check src/game/colors.js && node --check src/data/levelLoader.js && node -e \"JSON.parse(require('fs').readFileSync('src/data/classicLevels.json','utf8'))\" && node tests/levelLoader.smoke.mjs && node tests/generator.smoke.mjs && node tests/selector.smoke.mjs && node tests/validator.smoke.mjs && node tests/pillRenderer.smoke.mjs"
   }
 }
