@@ -27,6 +27,12 @@ export const EVENTS = {
   // via #8 along with the screen:* additions from #4.
   GRID_READY: 'grid:ready',
 
+  // Level lifecycle — added in #16. §3.4 silent on level:ready; issue
+  // body mandates emit after generator runs so downstream consumers
+  // (validator, HUD, theme banner) can subscribe to the same event.
+  // Spec gap routed via #8 along with the earlier engine extensions.
+  LEVEL_READY: 'level:ready',
+
   // Game/UI layers — placeholders, emitted in later issues (#4+)
   GAME_START: 'game:start',
   DRAG_BEGIN: 'drag:begin',
