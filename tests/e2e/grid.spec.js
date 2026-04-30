@@ -14,7 +14,7 @@ test.describe('grid (game)', () => {
     await page.waitForFunction(() => !!window.router && !!window.bus && !!window.__wq);
   });
 
-  test('navigating to game renders the 5×5 demo grid', async ({ page }) => {
+  test('navigating to game renders the level-1 grid via generator', async ({ page }) => {
     // Subscribe BEFORE the navigation so we capture grid:ready. We do NOT
     // reset the bus here — main.js registered the screen:enter→renderGrid
     // bridge at boot, and resetting would unhook it. We just drive show()
@@ -27,30 +27,47 @@ test.describe('grid (game)', () => {
       window.router.show(window.SCREENS.GAME);
     });
 
-    // Locator-based positive assertions — Playwright auto-waits.
     const gameSection = page.locator('section[data-screen="game"]');
     await expect(gameSection).toHaveAttribute('data-active', '');
 
-    const cells = page.locator('#grid-root button.cell');
-    await expect(cells).toHaveCount(25);
+    // Level 1 dims read from classicLevels.json[0] — generator landed in PR #22.
+    // Letters are now procedurally placed, not a hardcoded DEMO_LETTERS table.
+    // Assert structural reality + first-cell ARIA pattern, not specific letters
+    // at specific cells. Read level dims from the runtime so this test survives
+    // future level edits.
+    const { rows, cols } = await page.evaluate(async () => {
+      const { getLevel } = await import('/src/data/levelLoader.js');
+      const lvl = getLevel(1);
+      return { rows: lvl.rows, cols: lvl.cols };
+    });
+    const expectedCells = rows * cols;
 
-    // Row-major: index 0 → S (0,0), index 2 → N (0,2), index 5 → A (1,0).
-    await expect(cells.nth(0)).toHaveText('S');
-    await expect(cells.nth(2)).toHaveText('N');
-    await expect(cells.nth(5)).toHaveText('A');
+    const cells = page.locator('#grid-root button.cell');
+    await expect(cells).toHaveCount(expectedCells);
+
+    // Every cell carries exactly one A–Z letter (generator contract per §6.3).
+    const letterShape = await page.evaluate(() =>
+      Array.from(document.querySelectorAll('#grid-root button.cell')).every(
+        (el) => /^[A-Z]$/.test((el.textContent || '').trim())
+      )
+    );
+    expect(letterShape).toBe(true);
+
+    // First-cell coordinates + ARIA label pattern (letter is dynamic).
     await expect(cells.nth(0)).toHaveAttribute('data-row', '0');
     await expect(cells.nth(0)).toHaveAttribute('data-col', '0');
-    await expect(cells.nth(0)).toHaveAttribute('aria-label', 'Letter S at row 1 column 1');
+    const firstAria = await cells.nth(0).getAttribute('aria-label');
+    expect(firstAria).toMatch(/^Letter [A-Z] at row 1 column 1$/);
 
-    // CSS custom properties drive the template — verify they were set.
+    // CSS custom properties drive the template.
     const gridRootCols = await page.locator('#grid-root').evaluate((el) =>
       el.style.getPropertyValue('--grid-cols')
     );
     const gridRootRows = await page.locator('#grid-root').evaluate((el) =>
       el.style.getPropertyValue('--grid-rows')
     );
-    expect(gridRootCols).toBe('5');
-    expect(gridRootRows).toBe('5');
+    expect(gridRootCols).toBe(String(cols));
+    expect(gridRootRows).toBe(String(rows));
 
     const display = await page.locator('#grid-root').evaluate((el) => getComputedStyle(el).display);
     expect(display).toBe('grid');
@@ -58,7 +75,7 @@ test.describe('grid (game)', () => {
     // grid:ready fired with the right shape.
     const captured = await page.evaluate(() => window.__capturedGridReady);
     expect(captured.length).toBeGreaterThanOrEqual(1);
-    expect(captured[captured.length - 1]).toMatchObject({ rows: 5, cols: 5 });
+    expect(captured[captured.length - 1]).toMatchObject({ rows, cols });
   });
 
   test('createGrid + renderGrid in page context — 4×4 floor and 8×8 ceiling', async ({ page }) => {
