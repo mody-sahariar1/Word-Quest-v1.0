@@ -6,8 +6,8 @@
 import './engine/eventBus.js';
 import './engine/state.js';
 import { load } from './engine/storage.js';
-import { router, SCREENS } from './engine/router.js';
-import { on } from './engine/eventBus.js';
+import { router, SCREENS, _resetForTests as _resetRouterForTests } from './engine/router.js';
+import { on, off, emit, _resetForTests as _resetBusForTests } from './engine/eventBus.js';
 import { EVENTS } from './engine/constants.js';
 import { createGrid, renderGrid } from './game/grid.js';
 
@@ -20,6 +20,20 @@ const DEMO_LETTERS = [
   ['X', 'X', 'X', 'X', 'X'],
   ['X', 'X', 'X', 'X', 'X'],
 ];
+
+// Diagnostic mount: expose runtime entries on window so the Playwright e2e
+// suite can drive the real router/bus from page context (issue #11). Always
+// on for now; gating behind ?dev=1 is deferred to spec-reconciliation #8.
+if (typeof window !== 'undefined') {
+  window.router = router;
+  window.SCREENS = SCREENS;
+  window.bus = { on, off, emit };
+  window.EVENTS = EVENTS;
+  window.__wq = {
+    resetBus: _resetBusForTests,
+    resetRouter: _resetRouterForTests,
+  };
+}
 
 load();
 router.show(SCREENS.SPLASH);
