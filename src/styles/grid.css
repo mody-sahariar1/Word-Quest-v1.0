@@ -9,6 +9,10 @@
   grid-template-columns: repeat(var(--grid-cols, 6), 1fr);
   grid-template-rows: repeat(var(--grid-rows, 6), 1fr);
   gap: var(--sp-2);
+  /* §6.1 mobile-specific: prevent touch-scroll/zoom hijacking the drag.
+   * Selector also calls preventDefault() in pointerdown — `touch-action`
+   * makes the suppression structural so iOS Safari can't second-guess it. */
+  touch-action: none;
   /* §5.3.4: aspect-ratio: N/M (cols/rows) so the card stays square-ish
    * regardless of grid dimensions. */
   aspect-ratio: var(--grid-cols, 6) / var(--grid-rows, 6);
