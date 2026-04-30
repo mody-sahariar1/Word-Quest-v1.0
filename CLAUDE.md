@@ -27,8 +27,9 @@ You are running headless under `claude -p`. The daemon hands you one GitHub issu
 ### Phase 1 — Explore (mandatory before any write)
 
 1. Read this file and **`BUILD_SPEC.md`** end-to-end. Re-read mid-task if you forget.
-2. Read **at least 3 files in the subsystem you're about to touch** (or, if the subsystem doesn't exist yet, read the matching section of `BUILD_SPEC.md` plus equivalent files in Bloxplode-Beta if the issue says "1:1 mirror" of a BX feature).
-3. Trace at least one call path end-to-end. Don't guess at how data flows.
+2. **Watch the reference videos in order — Project1.MOV → Project2.MOV → Project3.MOV → Project4.MOV.** They are linked from the top of `BUILD_SPEC.md` and hosted at the `reference-videos-v1` GitHub Release. **Mandatory** for any issue touching gameplay feel, drag responsiveness, animation timing, audio cues, or visual chrome (anything in `src/screens/`, `src/game/`, or `src/styles/`). The videos are the source of truth for behavior + feel that spec text can only approximate. Fetch with `gh release download reference-videos-v1 --repo mody-sahariar1/Word-Quest-v1.0` and watch end-to-end before writing code. **Do not commit the files** — they are in `.gitignore`. If a video reveals a conflict with the spec, **refuse the issue and flag the gap** (per Phase 2 below); do not silently amend `BUILD_SPEC.md` — that document is hard-excluded for a reason.
+3. Read **at least 3 files in the subsystem you're about to touch** (or, if the subsystem doesn't exist yet, read the matching section of `BUILD_SPEC.md` plus equivalent files in Bloxplode-Beta if the issue says "1:1 mirror" of a BX feature).
+4. Trace at least one call path end-to-end. Don't guess at how data flows.
 
 ### Phase 2 — Sanity-check the issue's premise
 
