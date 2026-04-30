@@ -5,6 +5,7 @@
 
 import { emit } from './eventBus.js';
 import { EVENTS, PERSISTENT_KEYS } from './constants.js';
+import { getLevel } from '../data/levelLoader.js';
 
 // Default state — BUILD_SPEC.md §3.2 verbatim.
 // Factory function so each load/reset starts from a fresh, isolated copy
@@ -76,6 +77,13 @@ export function _hydrate(partial) {
 export function _resetForTests() {
   _state = defaultState();
   _saveHook = null;
+}
+
+// Issue #15 — read the active classic-mode level data via levelLoader.
+// Returns null until loadClassicLevels() has resolved (cache empty);
+// callers gate on null as "level data not ready yet".
+export function getCurrentLevelData() {
+  return getLevel(_state.classicLevel);
 }
 
 // Snapshot of the persistent slice for storage.save().
