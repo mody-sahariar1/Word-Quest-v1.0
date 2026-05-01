@@ -105,8 +105,12 @@ function mountPillLayer(gridRoot) {
   svg.style.height = '100%';
   svg.style.pointerEvents = 'none';
   svg.style.zIndex = '0';
-  if (gridRoot.firstChild) gridRoot.insertBefore(svg, gridRoot.firstChild);
-  else gridRoot.appendChild(svg);
+  // Append last so the SVG paints AFTER cells in CSS Grid DOM-order
+  // tiebreaking (#43). z-index: 0 + z-index: auto are at the same paint
+  // level per W3C painting order step 6; only DOM order distinguishes
+  // them. SVG-as-firstChild made pills paint behind cells' white
+  // backgrounds, visible only in the inter-cell gaps.
+  gridRoot.appendChild(svg);
   return svg;
 }
 

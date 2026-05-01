@@ -126,4 +126,59 @@ test.describe('drag input (game)', () => {
       expect(tag).toBe('DIV');
     }
   });
+
+  test('iOS long-press suppression — cells have -webkit-touch-callout: none (#43)', async ({ page }) => {
+    // Regression trap for #43 Regression A: tap-and-hold on a cell must
+    // not pop the iOS Safari copy menu. The fix is three CSS properties on
+    // .cell; we lock the most critical one here. Headless Chromium does
+    // not actually trigger the long-press menu (real iOS Safari does), so
+    // this is a CSS-presence assertion, not a behavioral assertion.
+    // Chromium drops Safari-only properties (-webkit-touch-callout,
+    // -webkit-user-select) from its parsed CSSOM, so document.styleSheets
+    // doesn't see them even though the rule ships in the file. Fetch the
+    // raw CSS source and assert presence in the unparsed text — the
+    // browser may not recognize it but real iOS Safari does, which is
+    // the only browser where this property matters.
+    const cssSource = await page.evaluate(async () => {
+      const res = await fetch('/src/styles/grid.css');
+      return await res.text();
+    });
+    expect(cssSource).toMatch(/-webkit-touch-callout:\s*none/);
+    expect(cssSource).toMatch(/-webkit-user-select:\s*none/);
+    expect(cssSource).toMatch(/user-select:\s*none/);
+  });
+
+  test('pill SVG paints above cells — last child of #grid-root (#43)', async ({ page }) => {
+    // Regression trap for #43 Regression B: the SVG pill layer must be
+    // the LAST child of #grid-root so it paints AFTER cells in CSS Grid
+    // DOM-order tiebreaking. Inserting it as firstChild made pills paint
+    // behind cells' white backgrounds, visible only in inter-cell gaps.
+    const layout = await page.evaluate(() => {
+      const root = document.getElementById('grid-root');
+      const lastChild = root.lastElementChild;
+      const svg = root.querySelector('#pill-layer');
+      return {
+        svgExists: !!svg,
+        svgIsLastChild: lastChild && lastChild.id === 'pill-layer',
+        cellCount: root.querySelectorAll('.cell').length,
+      };
+    });
+    expect(layout.svgExists).toBe(true);
+    expect(layout.cellCount).toBeGreaterThan(0);
+    expect(layout.svgIsLastChild).toBe(true);
+  });
+
+  test('cell a11y — role=button + tabindex=0 + aria-label preserved (#43)', async ({ page }) => {
+    // Regression trap for #43 Regression C: switching <button>→<div>
+    // dropped the implicit role="button" + tab-order. Restored explicitly
+    // so screen readers + keyboard nav still announce/reach cells.
+    const a11y = await page.$eval('#grid-root .cell', (el) => ({
+      role: el.getAttribute('role'),
+      tabindex: el.getAttribute('tabindex'),
+      ariaLabel: el.getAttribute('aria-label'),
+    }));
+    expect(a11y.role).toBe('button');
+    expect(a11y.tabindex).toBe('0');
+    expect(a11y.ariaLabel).toMatch(/^Letter [A-Z] at row \d+ column \d+$/);
+  });
 });
