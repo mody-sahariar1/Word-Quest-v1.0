@@ -120,7 +120,12 @@ export function renderGrid(grid, mountEl) {
       cell.className = 'cell';
       cell.dataset.row = String(r);
       cell.dataset.col = String(c);
-      // Accessible label so screen readers announce position + letter.
+      // a11y restoration after the <button>→<div> swap (#43): role=button
+      // gives screen readers the same announcement <button> had implicitly,
+      // tabindex=0 puts the cell back in keyboard tab-order. aria-label
+      // remains the human-readable announcement.
+      cell.setAttribute('role', 'button');
+      cell.setAttribute('tabindex', '0');
       cell.setAttribute('aria-label', `Letter ${letter} at row ${r + 1} column ${c + 1}`);
       cell.textContent = letter;
       frag.appendChild(cell);
