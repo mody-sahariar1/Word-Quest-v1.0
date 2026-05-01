@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+
+# OS junk
+.DS_Store
+
+# Reference videos fetched on demand from GitHub Releases (per BUILD_SPEC.md §"Reference videos")
+Project*.MOV
+
+# Playwright outputs (per #11 — wire e2e suite)
+test-results/
+playwright-report/
+blob-report/
+

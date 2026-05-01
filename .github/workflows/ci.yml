@@ -1,0 +1,47 @@
+name: CI
+# Static-contract gate on every push to main and every PR. Runs the Node
+# validate chain (node --check on every src module + JSON parse on
+# classicLevels.json + the smoke tests under tests/*.smoke.mjs).
+#
+# Word-Quest has no bundler — `index.html` + `src/` + `assets/` ship raw.
+# There is no `npm run build` step in package.json; the validate chain IS
+# the static-contract gate. The Playwright e2e suite (e2e.yml) runs in
+# parallel as the runtime-fidelity gate.
+#
+# Issue #39 — currently WQ has no static-contract gate beyond e2e.yml.
+# Deployed by the Stratos Games Factory — do not hand-edit.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Validate
+        # Runs the WQ-side gate chain: node --check on every src module,
+        # JSON parse on classicLevels.json, plus the tests/*.smoke.mjs
+        # runtime smokes. Catches regressions that pure file-existence
+        # checks would miss.
+        run: npm run validate
