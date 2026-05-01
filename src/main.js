@@ -1,8 +1,9 @@
 // Word Quest — boot.
 // Engine layer (eventBus + state + storage) wired in #3.
 // Router mounts in #4; grid model + render lands in #5;
-// level data + loader land in #15; generator + level:ready land in #16.
-// Per BUILD_SPEC.md §3.1 / §3.3 / §6.3 / §8.
+// level data + loader land in #15; generator + level:ready land in #16;
+// drag selector wires on grid:ready in #17.
+// Per BUILD_SPEC.md §3.1 / §3.3 / §6 / §6.3 / §8.
 
 import './engine/eventBus.js';
 import './engine/state.js';
@@ -12,6 +13,7 @@ import { on, off, emit, _resetForTests as _resetBusForTests } from './engine/eve
 import { EVENTS } from './engine/constants.js';
 import { createGrid, renderGrid } from './game/grid.js';
 import { generateGrid } from './game/generator.js';
+import { attachSelector } from './game/selector.js';
 import { loadClassicLevels } from './data/levelLoader.js';
 import { getCurrentLevelData } from './engine/state.js';
 
@@ -68,10 +70,24 @@ on(EVENTS.SCREEN_ENTER, ({ screen }) => {
   _renderActiveLevel();
 });
 
-// Proves the grid:ready event fires end-to-end. Removed when real
-// game-screen consumers (selector, pillRenderer) take over.
+// Selector wires on every grid:ready. The previous detach is called
+// before re-attaching so a re-render (level transition, dev re-mount)
+// doesn't leak listeners. Issue #17.
+let _detachSelector = null;
 on(EVENTS.GRID_READY, (payload) => {
   console.log('[main] grid:ready', payload);
+  if (_detachSelector) { _detachSelector(); _detachSelector = null; }
+  if (payload && payload.mountEl) {
+    _detachSelector = attachSelector(payload.mountEl);
+  }
+});
+
+// Detach selector when leaving the game screen. router emits screen:exit
+// before screen:enter on the next show(); selector then re-attaches when
+// the next grid:ready fires on re-entry.
+on(EVENTS.SCREEN_EXIT, ({ screen }) => {
+  if (screen !== SCREENS.GAME) return;
+  if (_detachSelector) { _detachSelector(); _detachSelector = null; }
 });
 
 // Kick off the level-data fetch in parallel with the splash. Once it

@@ -45,6 +45,17 @@ export const EVENTS = {
   POWERUP_USE: 'powerup:use',
   POWERUP_EARN: 'powerup:earn',
   SETTINGS_CHANGE: 'settings:change',
+
+  // Selector lifecycle — added in #17 per the issue body's mandate
+  // ("Add the event names to constants.js under a new SELECT_* block").
+  // §3.4 lists `drag:begin/move/end`; the SELECT_* names are richer
+  // (cancel exists, payloads carry path + word + duration). Spec-vs-issue
+  // delta routed via #8. Selector emits these; validator (#18) and
+  // pillRenderer (#19) listen.
+  SELECT_START: 'select:start',
+  SELECT_EXTEND: 'select:extend',
+  SELECT_END: 'select:end',
+  SELECT_CANCEL: 'select:cancel',
 };
 
 // Canonical screen names — BUILD_SPEC.md §3.1.
