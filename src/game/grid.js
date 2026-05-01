@@ -8,10 +8,14 @@
 // piece will plug into.
 //
 // Spec note: §5.3.4 specifies `<div class="cell">` containing
-// `<span class="letter">`. Issue #5 explicitly upgrades the cell to a
-// `<button>` for keyboard focus + screen-reader semantics. Conflict
-// flagged in observation routing (#8); the accessibility upgrade wins
-// at G1 because there is no input layer to capture clicks yet.
+// `<span class="letter">`. Issue #5 originally rendered cells as
+// `<button>` for keyboard focus + screen-reader semantics. That
+// upgrade was reverted in #37: real iOS Safari + Android Chrome do
+// not deliver continuous `pointermove` events while a finger drags
+// across `<button>` elements (the OS treats each button as its own
+// tap-cancel zone), which made the deployed game unplayable. Cells
+// now render as `<div>` per the spec; aria-label preserves the
+// screen-reader announcement.
 
 import { emit } from '../engine/eventBus.js';
 import { EVENTS } from '../engine/constants.js';
@@ -112,15 +116,14 @@ export function renderGrid(grid, mountEl) {
   for (let r = 0; r < grid.rows; r++) {
     for (let c = 0; c < grid.cols; c++) {
       const letter = grid.letters[r][c];
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'cell';
-      btn.dataset.row = String(r);
-      btn.dataset.col = String(c);
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.dataset.row = String(r);
+      cell.dataset.col = String(c);
       // Accessible label so screen readers announce position + letter.
-      btn.setAttribute('aria-label', `Letter ${letter} at row ${r + 1} column ${c + 1}`);
-      btn.textContent = letter;
-      frag.appendChild(btn);
+      cell.setAttribute('aria-label', `Letter ${letter} at row ${r + 1} column ${c + 1}`);
+      cell.textContent = letter;
+      frag.appendChild(cell);
     }
   }
   mountEl.appendChild(frag);
