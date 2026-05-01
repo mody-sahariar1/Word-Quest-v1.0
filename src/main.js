@@ -14,6 +14,8 @@ import { EVENTS } from './engine/constants.js';
 import { createGrid, renderGrid } from './game/grid.js';
 import { generateGrid } from './game/generator.js';
 import { attachSelector } from './game/selector.js';
+import { attachValidator } from './game/validator.js';
+import { attachPillRenderer } from './game/pillRenderer.js';
 import { loadClassicLevels } from './data/levelLoader.js';
 import { getCurrentLevelData } from './engine/state.js';
 
@@ -73,7 +75,17 @@ on(EVENTS.SCREEN_ENTER, ({ screen }) => {
 // Selector wires on every grid:ready. The previous detach is called
 // before re-attaching so a re-render (level transition, dev re-mount)
 // doesn't leak listeners. Issue #17.
+//
+// Validator (#18) + pillRenderer (#19) attach once at boot — they
+// listen to LEVEL_READY / SELECT_END / WORD_FOUND / GRID_READY etc.
+// globally and re-mount their internal state on grid:ready. They live
+// for the lifetime of the app; no per-screen teardown needed at G1.
+// pillRenderer captures the stable #grid-root element (renderGrid
+// wipes innerHTML but the element itself persists across levels).
 let _detachSelector = null;
+attachValidator();
+const _gridRoot = document.getElementById('grid-root');
+if (_gridRoot) attachPillRenderer(_gridRoot);
 on(EVENTS.GRID_READY, (payload) => {
   console.log('[main] grid:ready', payload);
   if (_detachSelector) { _detachSelector(); _detachSelector = null; }
