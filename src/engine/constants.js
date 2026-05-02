@@ -56,6 +56,16 @@ export const EVENTS = {
   SELECT_EXTEND: 'select:extend',
   SELECT_END: 'select:end',
   SELECT_CANCEL: 'select:cancel',
+  // Issue #47 Path 1 — live pointer tracking for smooth drag feel.
+  // SELECT_EXTEND fires only on cell crossings, so between crossings the
+  // pill stays pinned to the last cell-center (jerky). SELECT_MOVE fires
+  // on every pointermove during an active drag with the finger's
+  // cell-space position; pillRenderer uses it as the live `endXY` of the
+  // active pill so the visual leading edge tracks the finger continuously.
+  // Payload: { cellX: number, cellY: number, path: Array<{row,col}> }.
+  // cellX/cellY are in the same cell-space units as the SVG viewBox
+  // (1 unit = 1 cell), suitable to pass directly to pillPath().
+  SELECT_MOVE: 'select:move',
 };
 
 // Canonical screen names — BUILD_SPEC.md §3.1.
