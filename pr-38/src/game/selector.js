@@ -97,6 +97,35 @@ export function attachSelector(gridRoot) {
     });
   }
 
+  // Issue #47 Path 1: convert pointer client coords to cell-space (same
+  // unit system as the pill SVG viewBox: 1 unit = 1 cell). Returns null
+  // if the grid dims aren't readable (defensive — selector must never
+  // throw mid-drag). The SVG sits position:absolute inset:0 in
+  // #grid-root, so the grid's bounding rect is the SVG's bounding rect.
+  function clientToCellSpace(clientX, clientY) {
+    if (typeof gridRoot.getBoundingClientRect !== 'function') return null;
+    const rect = gridRoot.getBoundingClientRect();
+    if (!rect || rect.width <= 0 || rect.height <= 0) return null;
+    const rowsAttr = gridRoot.getAttribute && gridRoot.getAttribute('data-rows');
+    const colsAttr = gridRoot.getAttribute && gridRoot.getAttribute('data-cols');
+    const rows = Number(rowsAttr);
+    const cols = Number(colsAttr);
+    if (!Number.isInteger(rows) || !Number.isInteger(cols) || rows <= 0 || cols <= 0) return null;
+    const cellX = ((clientX - rect.left) / rect.width) * cols;
+    const cellY = ((clientY - rect.top) / rect.height) * rows;
+    return { cellX, cellY };
+  }
+
+  function emitMove(clientX, clientY) {
+    const xy = clientToCellSpace(clientX, clientY);
+    if (!xy) return;
+    emit(EVENTS.SELECT_MOVE, {
+      cellX: xy.cellX,
+      cellY: xy.cellY,
+      path: path.map((p) => ({ row: p.row, col: p.col })),
+    });
+  }
+
   function release() {
     if (pointerId != null && typeof gridRoot.releasePointerCapture === 'function') {
       try {
@@ -154,6 +183,16 @@ export function attachSelector(gridRoot) {
         typeof x === 'number' && typeof y === 'number' &&
         (x < r.left - slack || x > r.right + slack || y < r.top - slack || y > r.bottom + slack);
       if (out) { emitCancel('out-of-bounds'); return; }
+    }
+
+    // Issue #47 Path 1: live pointer tracking. Fire SELECT_MOVE on every
+    // pointermove during a drag so pillRenderer can re-render with the
+    // finger's pixel-precise position as the pill's visual end. This
+    // fires REGARDLESS of whether a cell-crossing happens (most
+    // pointermoves don't cross a cell), so the pill follows the finger
+    // smoothly between cell crossings instead of snapping at each one.
+    if (typeof ev.clientX === 'number' && typeof ev.clientY === 'number') {
+      emitMove(ev.clientX, ev.clientY);
     }
 
     const cell = cellAt(ev.clientX, ev.clientY);
