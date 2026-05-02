@@ -1,0 +1,59 @@
+name: Deploy main to GitHub Pages
+# Mirrors WQ's raw shipped paths (index.html, manifest.webmanifest, src/, assets/)
+# to gh-pages root on every push to main. Uses keep_files=true so PR preview
+# directories under /pr-<N>/ (deposited by pr-preview.yml) are preserved.
+#
+# Word-Quest ships index.html + src/ + assets/ + manifest.webmanifest as raw
+# static files (no Vite, no bundler, no Firebase yet). The "build" step here
+# is a no-op copy of those paths into a publish/ directory, which is then
+# deployed to gh-pages root via peaceiris/actions-gh-pages.
+#
+# Issue #42 (ports AP deploy.yml; pairs with pr-preview.yml from #41).
+# Concurrency group is shared with pr-preview.yml so the two workflows
+# serialize cleanly on gh-pages pushes. Deployed by the Stratos Games
+# Factory — do not hand-edit.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  # Shared with pr-preview.yml so main-deploys and PR-preview pushes
+  # serialize on the gh-pages branch. Without this, parallel pushes
+  # race on git push to gh-pages and some fail with "rejected — fetch
+  # first". cancel-in-progress: false queues runs instead of dropping.
+  group: gh-pages-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Stage raw static files for deploy
+        # Word-Quest has no bundler. Stage the raw shipped paths into publish/
+        # so peaceiris/actions-gh-pages can deploy them to gh-pages root.
+        # Manifest + classicLevels.json + assets all resolve relative to
+        # publish/ root, which maps to /Word-Quest-v1.0/ on gh-pages.
+        run: |
+          set -e
+          mkdir -p publish
+          cp index.html publish/
+          cp manifest.webmanifest publish/ 2>/dev/null || true
+          cp -r src publish/
+          cp -r assets publish/ 2>/dev/null || true
+
+      - name: Mirror publish/ to gh-pages root
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./publish
+          keep_files: true
+          commit_message: "deploy: main → gh-pages (${{ github.sha }})"
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
