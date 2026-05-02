@@ -1,9 +1,0 @@
-{
-  "name": "Word Quest",
-  "short_name": "Word Quest",
-  "start_url": "./",
-  "display": "standalone",
-  "background_color": "#1B3550",
-  "theme_color": "#1B3550",
-  "icons": []
-}
