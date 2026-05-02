@@ -98,24 +98,28 @@ function mountPillLayer(gridRoot) {
   svg.setAttribute('id', PILL_LAYER_ID);
   svg.setAttribute('viewBox', `0 0 ${dims.cols} ${dims.rows}`);
   svg.setAttribute('preserveAspectRatio', 'none');
-  // grid-area spans the entire CSS Grid; pointer-events:none lets
-  // pointer events through to the cells beneath.
-  svg.style.gridArea = '1 / 1 / -1 / -1';
+  // Layering — #46 operator-approved fix (after #43 + #45 attempts at
+  // sibling z-index failed on real iOS Safari + Android Chrome):
+  //   - #grid-root establishes a positioned ancestor (position:relative
+  //     in grid.css).
+  //   - The SVG is `position: absolute; inset: 0` so it covers the entire
+  //     grid card AND is pulled out of normal CSS Grid flow.
+  //   - z-index: 2 lifts it above any cell stacking-context. Because the
+  //     SVG is no longer a normal-flow grid item sibling-of-cells, cell
+  //     stacking contexts created by transform / opacity / isolation
+  //     can't wall off the SVG the way they did at #43/#45 — a
+  //     position:absolute element resolves against its containing block
+  //     (#grid-root), not against any cell's stacking context.
+  //   - pointer-events:none lets pointermove pass through to the cells
+  //     underneath so the selector keeps receiving drag events.
+  svg.style.position = 'absolute';
+  svg.style.inset = '0';
   svg.style.width = '100%';
   svg.style.height = '100%';
   svg.style.pointerEvents = 'none';
-  // Explicit positioning + z-index lifts the SVG into the z-axis above
-  // cells (which are position:relative; z-index:1; per grid.css). On
-  // real iOS Safari + Android Chrome the previous static + DOM-order
-  // approach (#43) painted the cell's white background over the pill,
-  // visible only as a sliver of color in the inter-cell gaps (#45).
-  // Both layers must be positioned for z-index to apply per W3C
-  // painting order step 8; cells at 1, SVG at 2 → pill paints on top
-  // and the spec §6.2 0.55-alpha stadium reads through to the letters.
-  svg.style.position = 'relative';
   svg.style.zIndex = '2';
   // Append last so the SVG paints AFTER cells regardless of z-index
-  // (defensive — z-index makes the layering deterministic on its own).
+  // (defensive — z-index + absolute makes the layering deterministic).
   gridRoot.appendChild(svg);
   return svg;
 }

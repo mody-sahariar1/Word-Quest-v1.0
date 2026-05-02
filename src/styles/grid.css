@@ -9,6 +9,16 @@
   grid-template-columns: repeat(var(--grid-cols, 6), 1fr);
   grid-template-rows: repeat(var(--grid-rows, 6), 1fr);
   gap: var(--sp-2);
+  /* §6.2 + #46 forensic finding: the SVG pill layer is `position: absolute;
+   * inset: 0` against this container, so #grid-root MUST establish a
+   * positioned ancestor — otherwise the SVG resolves against <body> and
+   * paints the pill across the whole page. The previous attempts (#43, #45)
+   * tried sibling z-index alone; that fails because cells with transform /
+   * opacity / isolation create their own stacking contexts that wall off
+   * the SVG sibling regardless of z-index value. Pulling the SVG out of
+   * normal flow with absolute positioning + an explicitly-positioned
+   * #grid-root sidesteps the stacking-context trap entirely. */
+  position: relative;
   /* §6.1 mobile-specific: prevent touch-scroll/zoom hijacking the drag.
    * Selector also calls preventDefault() in pointerdown — `touch-action`
    * makes the suppression structural so iOS Safari can't second-guess it. */
