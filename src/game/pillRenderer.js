@@ -99,17 +99,23 @@ function mountPillLayer(gridRoot) {
   svg.setAttribute('viewBox', `0 0 ${dims.cols} ${dims.rows}`);
   svg.setAttribute('preserveAspectRatio', 'none');
   // grid-area spans the entire CSS Grid; pointer-events:none lets
-  // pointer events through to the cell <button>s.
+  // pointer events through to the cells beneath.
   svg.style.gridArea = '1 / 1 / -1 / -1';
   svg.style.width = '100%';
   svg.style.height = '100%';
   svg.style.pointerEvents = 'none';
-  svg.style.zIndex = '0';
-  // Append last so the SVG paints AFTER cells in CSS Grid DOM-order
-  // tiebreaking (#43). z-index: 0 + z-index: auto are at the same paint
-  // level per W3C painting order step 6; only DOM order distinguishes
-  // them. SVG-as-firstChild made pills paint behind cells' white
-  // backgrounds, visible only in the inter-cell gaps.
+  // Explicit positioning + z-index lifts the SVG into the z-axis above
+  // cells (which are position:relative; z-index:1; per grid.css). On
+  // real iOS Safari + Android Chrome the previous static + DOM-order
+  // approach (#43) painted the cell's white background over the pill,
+  // visible only as a sliver of color in the inter-cell gaps (#45).
+  // Both layers must be positioned for z-index to apply per W3C
+  // painting order step 8; cells at 1, SVG at 2 → pill paints on top
+  // and the spec §6.2 0.55-alpha stadium reads through to the letters.
+  svg.style.position = 'relative';
+  svg.style.zIndex = '2';
+  // Append last so the SVG paints AFTER cells regardless of z-index
+  // (defensive — z-index makes the layering deterministic on its own).
   gridRoot.appendChild(svg);
   return svg;
 }
