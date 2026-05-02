@@ -17,8 +17,14 @@ import { EVENTS } from '../engine/constants.js';
 import { nextPillColor, resetPillColors } from './colors.js';
 
 // §6.2: "Width perpendicular = 0.78 × cell size" → half-width 0.39 in
-// cell-space (1 viewBox unit = 1 cell).
-const PILL_HALF_WIDTH_CELLS = 0.39;
+// cell-space. Issue #47: operator reports the 0.78 figure leaves a
+// visible white band above + below the pill (cell white background
+// peeks through ~11% top + ~11% bottom). Issue #47 directs Option A —
+// widen halfWidth to 0.5 (1.0 × cell, full perpendicular coverage).
+// Spec conflict with §6.2's literal 0.78 figure flagged in PR #38
+// comment; operator resolves the spec offline (BUILD_SPEC.md is a
+// hard-excluded path per CLAUDE.md, never silently amended).
+const PILL_HALF_WIDTH_CELLS = 0.5;
 // §6.1: 220ms fade-out (no dedicated --dur-pill-fade token; gap → #8).
 const ACTIVE_FADE_OUT_MS = 220;
 
