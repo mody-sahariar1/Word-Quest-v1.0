@@ -9,6 +9,16 @@
   grid-template-columns: repeat(var(--grid-cols, 6), 1fr);
   grid-template-rows: repeat(var(--grid-rows, 6), 1fr);
   gap: var(--sp-2);
+  /* §6.2 + #46 forensic finding: the SVG pill layer is `position: absolute;
+   * inset: 0` against this container, so #grid-root MUST establish a
+   * positioned ancestor — otherwise the SVG resolves against <body> and
+   * paints the pill across the whole page. The previous attempts (#43, #45)
+   * tried sibling z-index alone; that fails because cells with transform /
+   * opacity / isolation create their own stacking contexts that wall off
+   * the SVG sibling regardless of z-index value. Pulling the SVG out of
+   * normal flow with absolute positioning + an explicitly-positioned
+   * #grid-root sidesteps the stacking-context trap entirely. */
+  position: relative;
   /* §6.1 mobile-specific: prevent touch-scroll/zoom hijacking the drag.
    * Selector also calls preventDefault() in pointerdown — `touch-action`
    * makes the suppression structural so iOS Safari can't second-guess it. */
@@ -49,11 +59,39 @@
   border-radius: var(--r-cell);
   box-shadow: var(--shadow-button-resting);
 
+  /* §5.3.4: "Cell has `position: relative` so pills can absolutely
+   * position behind letters." Without explicit positioning + z-index,
+   * the cell paints as static — paint order ties resolve by DOM order,
+   * but Safari + Chrome on real devices report cell white background
+   * painting OVER the sibling pill SVG layer (#45). Making cells
+   * positioned grid items at z-index 1 forces the cell into the z-axis
+   * and lets the SVG layer (z-index 2, set in pillRenderer.js) paint
+   * deterministically on top. */
+  position: relative;
+  z-index: 1;
+
   /* No hover affordance — input layer lands later (#~6). */
   cursor: default;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
+  /* iOS Safari long-press suppression (#43). The <button> form had these
+   * by browser default; the <div> form (#37 fix) needs them explicit:
+   *   -webkit-user-select kills long-press text selection on Safari.
+   *   -webkit-touch-callout kills the long-press copy/save callout menu.
+   *   -webkit-user-drag prevents long-press image-drag fallback. */
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-user-drag: none;
   padding: 0;
+}
+
+/* Committed pill alpha — BUILD_SPEC §6.2 specs alpha 0→0.55 over
+ * --dur-pill-draw. --pill-1..--pill-7 tokens are solid hex; fill-opacity
+ * here gets us to the spec's 55% target so found-word pills don't fully
+ * cover the letters underneath (#43). The active pill already encodes
+ * its alpha at the rgba level via --pill-active. */
+.pill-committed {
+  fill-opacity: 0.55;
 }
 
 /* Wayfinding stub — present until the real game-screen UI lands.

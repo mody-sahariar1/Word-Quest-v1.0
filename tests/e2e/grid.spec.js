@@ -42,12 +42,12 @@ test.describe('grid (game)', () => {
     });
     const expectedCells = rows * cols;
 
-    const cells = page.locator('#grid-root button.cell');
+    const cells = page.locator('#grid-root .cell');
     await expect(cells).toHaveCount(expectedCells);
 
     // Every cell carries exactly one A–Z letter (generator contract per §6.3).
     const letterShape = await page.evaluate(() =>
-      Array.from(document.querySelectorAll('#grid-root button.cell')).every(
+      Array.from(document.querySelectorAll('#grid-root .cell')).every(
         (el) => /^[A-Z]$/.test((el.textContent || '').trim())
       )
     );
@@ -102,10 +102,10 @@ test.describe('grid (game)', () => {
       renderGrid(createGrid(8, 8, fixture(8, 8)), mount8);
 
       return {
-        cells4: mount4.querySelectorAll('button.cell').length,
-        cells8: mount8.querySelectorAll('button.cell').length,
-        last8Row: mount8.querySelectorAll('button.cell')[63].dataset.row,
-        last8Col: mount8.querySelectorAll('button.cell')[63].dataset.col,
+        cells4: mount4.querySelectorAll('.cell').length,
+        cells8: mount8.querySelectorAll('.cell').length,
+        last8Row: mount8.querySelectorAll('.cell')[63].dataset.row,
+        last8Col: mount8.querySelectorAll('.cell')[63].dataset.col,
       };
     });
 
@@ -131,7 +131,7 @@ test.describe('grid (game)', () => {
       const grid = createGrid(5, 5, letters);
       renderGrid(grid, mount);
       renderGrid(grid, mount);
-      return mount.querySelectorAll('button.cell').length;
+      return mount.querySelectorAll('.cell').length;
     });
 
     expect(cellCount).toBe(25);

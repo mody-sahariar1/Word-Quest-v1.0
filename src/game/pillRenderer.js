@@ -17,8 +17,14 @@ import { EVENTS } from '../engine/constants.js';
 import { nextPillColor, resetPillColors } from './colors.js';
 
 // §6.2: "Width perpendicular = 0.78 × cell size" → half-width 0.39 in
-// cell-space (1 viewBox unit = 1 cell).
-const PILL_HALF_WIDTH_CELLS = 0.39;
+// cell-space. Issue #47: operator reports the 0.78 figure leaves a
+// visible white band above + below the pill (cell white background
+// peeks through ~11% top + ~11% bottom). Issue #47 directs Option A —
+// widen halfWidth to 0.5 (1.0 × cell, full perpendicular coverage).
+// Spec conflict with §6.2's literal 0.78 figure flagged in PR #38
+// comment; operator resolves the spec offline (BUILD_SPEC.md is a
+// hard-excluded path per CLAUDE.md, never silently amended).
+const PILL_HALF_WIDTH_CELLS = 0.5;
 // §6.1: 220ms fade-out (no dedicated --dur-pill-fade token; gap → #8).
 const ACTIVE_FADE_OUT_MS = 220;
 
@@ -98,15 +104,29 @@ function mountPillLayer(gridRoot) {
   svg.setAttribute('id', PILL_LAYER_ID);
   svg.setAttribute('viewBox', `0 0 ${dims.cols} ${dims.rows}`);
   svg.setAttribute('preserveAspectRatio', 'none');
-  // grid-area spans the entire CSS Grid; pointer-events:none lets
-  // pointer events through to the cell <button>s.
-  svg.style.gridArea = '1 / 1 / -1 / -1';
+  // Layering — #46 operator-approved fix (after #43 + #45 attempts at
+  // sibling z-index failed on real iOS Safari + Android Chrome):
+  //   - #grid-root establishes a positioned ancestor (position:relative
+  //     in grid.css).
+  //   - The SVG is `position: absolute; inset: 0` so it covers the entire
+  //     grid card AND is pulled out of normal CSS Grid flow.
+  //   - z-index: 2 lifts it above any cell stacking-context. Because the
+  //     SVG is no longer a normal-flow grid item sibling-of-cells, cell
+  //     stacking contexts created by transform / opacity / isolation
+  //     can't wall off the SVG the way they did at #43/#45 — a
+  //     position:absolute element resolves against its containing block
+  //     (#grid-root), not against any cell's stacking context.
+  //   - pointer-events:none lets pointermove pass through to the cells
+  //     underneath so the selector keeps receiving drag events.
+  svg.style.position = 'absolute';
+  svg.style.inset = '0';
   svg.style.width = '100%';
   svg.style.height = '100%';
   svg.style.pointerEvents = 'none';
-  svg.style.zIndex = '0';
-  if (gridRoot.firstChild) gridRoot.insertBefore(svg, gridRoot.firstChild);
-  else gridRoot.appendChild(svg);
+  svg.style.zIndex = '2';
+  // Append last so the SVG paints AFTER cells regardless of z-index
+  // (defensive — z-index + absolute makes the layering deterministic).
+  gridRoot.appendChild(svg);
   return svg;
 }
 
@@ -132,11 +152,16 @@ export function attachPillRenderer(gridRoot) {
   let svg = null;
   let activePathEl = null;
   let committedCount = 0;
+  // Issue #47 Path 1 — current cell-space path of the active drag, kept
+  // here so SELECT_MOVE handlers can rebuild the pill geometry from
+  // path[0] (the locked start cell) to the live finger position.
+  let activePath = [];
 
   function remount() {
     svg = mountPillLayer(gridRoot);
     activePathEl = null;
     committedCount = 0;
+    activePath = [];
   }
   // Initial mount — grid:ready re-mounts once cells exist if needed.
   remount();
@@ -146,6 +171,7 @@ export function attachPillRenderer(gridRoot) {
       activePathEl.parentNode.removeChild(activePathEl);
     }
     activePathEl = null;
+    activePath = [];
   }
 
   // §6.1 220ms fade-out via CSS transition + setTimeout cleanup.
@@ -164,12 +190,10 @@ export function attachPillRenderer(gridRoot) {
     }, ACTIVE_FADE_OUT_MS + 30);
   }
 
-  // Render the active pill (select:start + each select:extend).
-  function renderActive(cells) {
-    if (!svg) return;
-    const path = Array.isArray(cells) ? cells : [];
-    if (path.length === 0) { clearActive(); return; }
-    const d = pathForCells(path);
+  // Internal: ensure the active <path> element exists with the given d
+  // string. Called by both the cell-crossing renderer and the live
+  // pointer-tracking renderer (#47 Path 1).
+  function ensureActivePath(d) {
     if (!activePathEl) {
       activePathEl = makePathEl(d, '--pill-active', PILL_ACTIVE_CLASS);
       svg.appendChild(activePathEl);
@@ -181,6 +205,29 @@ export function attachPillRenderer(gridRoot) {
         activePathEl.style.opacity = '';
       }
     }
+  }
+
+  // Render the active pill (select:start + each select:extend).
+  // Cell-crossing path: pill spans path[0] → path[N-1] cell centers.
+  function renderActive(cells) {
+    if (!svg) return;
+    const path = Array.isArray(cells) ? cells : [];
+    if (path.length === 0) { clearActive(); return; }
+    activePath = path.map((p) => ({ row: p.row, col: p.col }));
+    const d = pathForCells(activePath, PILL_HALF_WIDTH_CELLS);
+    ensureActivePath(d);
+  }
+
+  // Issue #47 Path 1 — live pointer tracking. Re-render the active pill
+  // with `endXY` bound to the finger's cell-space position rather than
+  // the last cell-center, so the visual leading edge follows the finger
+  // smoothly between cell crossings. Called on every SELECT_MOVE.
+  function renderActiveLive(cellX, cellY) {
+    if (!svg) return;
+    if (!Array.isArray(activePath) || activePath.length === 0) return;
+    const start = cellCenter(activePath[0]);
+    const d = pillPath(start, [cellX, cellY], PILL_HALF_WIDTH_CELLS);
+    ensureActivePath(d);
   }
 
   // Commit found word as permanent pill. §6.2 alpha 0→0.55 over
@@ -207,6 +254,11 @@ export function attachPillRenderer(gridRoot) {
   // Listeners — named fns so off() matches by identity.
   const onSelectStart = (p) => { if (p) renderActive([{ row: p.row, col: p.col }]); };
   const onSelectExtend = (p) => { if (p && Array.isArray(p.path)) renderActive(p.path); };
+  // Issue #47 Path 1 — live finger tracking on every pointermove.
+  const onSelectMove = (p) => {
+    if (!p || typeof p.cellX !== 'number' || typeof p.cellY !== 'number') return;
+    renderActiveLive(p.cellX, p.cellY);
+  };
   const onSelectCancel = () => fadeOutActive();
   const onWordFound = (p) => commitFound(p);
   // word:rejected = active drag never matched → fade out.
@@ -221,6 +273,7 @@ export function attachPillRenderer(gridRoot) {
 
   on(EVENTS.SELECT_START, onSelectStart);
   on(EVENTS.SELECT_EXTEND, onSelectExtend);
+  on(EVENTS.SELECT_MOVE, onSelectMove);
   on(EVENTS.SELECT_CANCEL, onSelectCancel);
   on(EVENTS.WORD_FOUND, onWordFound);
   on(EVENTS.WORD_REJECTED, onWordRejected);
@@ -232,6 +285,7 @@ export function attachPillRenderer(gridRoot) {
     detached = true;
     off(EVENTS.SELECT_START, onSelectStart);
     off(EVENTS.SELECT_EXTEND, onSelectExtend);
+    off(EVENTS.SELECT_MOVE, onSelectMove);
     off(EVENTS.SELECT_CANCEL, onSelectCancel);
     off(EVENTS.WORD_FOUND, onWordFound);
     off(EVENTS.WORD_REJECTED, onWordRejected);
@@ -240,6 +294,7 @@ export function attachPillRenderer(gridRoot) {
     if (svg && svg.parentNode) svg.parentNode.removeChild(svg);
     svg = null;
     activePathEl = null;
+    activePath = [];
     committedCount = 0;
   };
 }
